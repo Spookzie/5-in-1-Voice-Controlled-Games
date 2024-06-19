@@ -18,9 +18,42 @@ void Game::PollEvents()
 {
 	while (this->window.pollEvent(this->ev))
 	{
-		if ((this->ev.type == sf::Event::Closed) || (mainMenu.GetButtonPressed() == 5))
+		if (this->ev.type == sf::Event::Closed)
 			this->window.close();
 	}
+}
+
+
+void Game::LaunchGame(int game_id)
+{
+	std::string command;
+    switch (game_id)
+    {
+    case 0:
+        command = "\"D:\\Work\\SFML\\SFML Projects\\My Files\\Project1\\x64\\Debug\\Project1.exe\"";
+        break;
+    case 1:
+        command = "\"path/to/arkanoid_executable.exe\"";
+        break;
+    case 2:
+        command = "\"path/to/snake_executable.exe\"";
+        break;
+    case 3:
+        command = "\"path/to/car_racing_executable.exe\"";
+        break;
+    case 4:
+        command = "\"path/to/xonix_executable.exe\"";
+        break;
+    case 5:
+        this->window.close();
+        return;
+    default:
+        return;
+    }
+
+    this->window.close();
+    std::system(command.c_str());
+    this->Init_Window();
 }
 
 
@@ -41,8 +74,15 @@ Game::~Game()
 void Game::Update()
 {
 	this->PollEvents();
-
+    
 	mainMenu.Update(this->window);
+
+    //Game launching functionality
+    if (mainMenu.buttonID != 50)
+    {
+        this->LaunchGame(mainMenu.buttonID);
+        mainMenu.buttonID = 50;
+    }
 }
 
 

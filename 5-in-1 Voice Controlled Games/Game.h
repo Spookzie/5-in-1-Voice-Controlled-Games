@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MainMenu.h"
+#include <thread>
 
 
 class Game
@@ -22,6 +23,8 @@ private:
 	//Game setup
 	void PollEvents();
 
+	//Main Menu
+	void LaunchGame(int game_id);
 
 public:
 	//Constructor & Destructor
