@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MainMenu.h"
-#include <thread>
 
 
 class Game
@@ -17,7 +16,6 @@ private:
 
 	//	FUNCTIONS	//
 	//Initializers
-	void Start();
 	void Init_Window();
 
 	//Game setup

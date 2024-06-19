@@ -2,10 +2,6 @@
 #include "Game.h"
 
 
-void Game::Start()
-{
-}
-
 void Game::Init_Window()
 {
 	this->window.create(sf::VideoMode(1280, 720), "5-in-1 Voice Controlled games");
@@ -30,7 +26,7 @@ void Game::LaunchGame(int game_id)
     switch (game_id)
     {
     case 0:
-        command = "\"D:\\Work\\SFML\\SFML Projects\\My Files\\5-in-1 Voice Controlled Games\\Project1\\x64\\Debug\\Project1.exe\"";
+        command = "DoodleJump\\x64\\Debug\\DoodleJump.exe";
         break;
     case 1:
         command = "\"path/to/arkanoid_executable.exe\"";
@@ -60,7 +56,6 @@ void Game::LaunchGame(int game_id)
 //Constructor
 Game::Game()
 {
-	this->Start();
 	this->Init_Window();
 	this->PollEvents();
 }

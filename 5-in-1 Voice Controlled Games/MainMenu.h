@@ -6,20 +6,13 @@ class MainMenu
 private:
 	//	VARIABLES	//
 	//Textures & sprites
-	sf::Texture bgTexture;
-	sf::Texture buttonTexture;
-	sf::Sprite bgSprite;
-	sf::Sprite buttonSprite;
+	sf::Texture bgTexture, buttonTexture;
+	sf::Sprite bgSprite, buttonSprite;
 	std::vector<sf::Sprite> buttons;
 
 	//Font
 	sf::Font font;
-	sf::Text doodleJump;
-	sf::Text arkanoid;
-	sf::Text snake;
-	sf::Text carRacing;
-	sf::Text xonix;
-	sf::Text quit;
+	sf::Text doodleJump, arkanoid, snake, carRacing, xonix, quit;
 
 	//	FUNCTIONS	//
 	//Initializers
