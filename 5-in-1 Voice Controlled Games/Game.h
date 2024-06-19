@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MainMenu.h"
+
 
 class Game
 {
@@ -9,11 +11,8 @@ private:
 	sf::RenderWindow window;
 	sf::Event ev;
 
-	//Main Menu
-	sf::Texture mmTexture;
-	sf::Texture mmButtonTexture;
-	sf::Sprite mmBG;
-	sf::Sprite mmButton;
+	//Main menu
+	MainMenu mainMenu;
 
 	//	FUNCTIONS	//
 	//Initializers
@@ -22,6 +21,7 @@ private:
 
 	//Game setup
 	void PollEvents();
+
 
 public:
 	//Constructor & Destructor
