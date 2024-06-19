@@ -30,7 +30,7 @@ void Game::LaunchGame(int game_id)
     switch (game_id)
     {
     case 0:
-        command = "\"D:\\Work\\SFML\\SFML Projects\\My Files\\Project1\\x64\\Debug\\Project1.exe\"";
+        command = "\"D:\\Work\\SFML\\SFML Projects\\My Files\\5-in-1 Voice Controlled Games\\Project1\\x64\\Debug\\Project1.exe\"";
         break;
     case 1:
         command = "\"path/to/arkanoid_executable.exe\"";
