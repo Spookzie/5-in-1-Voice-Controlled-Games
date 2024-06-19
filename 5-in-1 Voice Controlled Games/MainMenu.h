@@ -1,7 +1,6 @@
 #pragma once
 
 
-
 class MainMenu
 {
 private:
@@ -22,17 +21,6 @@ private:
 	sf::Text xonix;
 	sf::Text quit;
 
-	//Interaction
-	int buttonID;
-	/*
-	Doodle Jump = 0
-	Arkanoid	= 1
-	Snake		= 2
-	Car Racing	= 3
-	Xonix		= 4
-	Quit		= 5
-	*/
-
 	//	FUNCTIONS	//
 	//Initializers
 	void Start();
@@ -41,11 +29,15 @@ private:
 	//Interaction
 	void IsMouseHovering(sf::RenderWindow& window);
 
+
 public:
+	//	VARIABLES	//
+	//Interaction
+	int buttonID;
+
+	//	FUNCTIONS	//
 	//Constructor
 	MainMenu();
-
-	const int GetButtonPressed() const { return this->buttonID; };
 
 	void Update(sf::RenderWindow& window);
 	void Render(sf::RenderTarget& target);

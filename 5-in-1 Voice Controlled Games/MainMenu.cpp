@@ -104,6 +104,8 @@ void MainMenu::IsMouseHovering(sf::RenderWindow& window)
 void MainMenu::Update(sf::RenderWindow& window)
 {
 	this->IsMouseHovering(window);
+	//this->ApplicationSwitching(window);
+	std::cout << this->buttonID << std::endl;
 }
 
 
