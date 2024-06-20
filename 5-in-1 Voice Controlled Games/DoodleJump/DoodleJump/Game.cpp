@@ -233,6 +233,7 @@ void Game::Render()
 	{
 		this->window.draw(this->oops);		//Drawing Oops where doodle fell
 		this->window.draw(this->gameOverText);
+		this->music.stop();
 	}
 
 	this->window.display();
