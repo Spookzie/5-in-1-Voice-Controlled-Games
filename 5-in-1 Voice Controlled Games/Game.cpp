@@ -29,7 +29,7 @@ void Game::LaunchGame(int game_id)
         command = "DoodleJump\\x64\\Debug\\DoodleJump.exe";
         break;
     case 1:
-        command = "\"path/to/arkanoid_executable.exe\"";
+        command = "Arkanoid\\x64\\Debug\\Arkanoid.exe";
         break;
     case 2:
         command = "\"path/to/snake_executable.exe\"";
