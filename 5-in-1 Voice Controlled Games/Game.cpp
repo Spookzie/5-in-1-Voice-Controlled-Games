@@ -32,7 +32,7 @@ void Game::LaunchGame(int game_id)
         command = "Arkanoid\\x64\\Debug\\Arkanoid.exe";
         break;
     case 2:
-        command = "\"path/to/snake_executable.exe\"";
+        command = "Snake\\x64\\Debug\\Snake.exe";
         break;
     case 3:
         command = "\"path/to/car_racing_executable.exe\"";
