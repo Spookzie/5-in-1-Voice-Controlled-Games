@@ -21,7 +21,7 @@ void MainMenu::Init_Resources()
 		std::cout << "ERROR::MainMenu.cpp::Init_Resources():: Failed to load the main menu button texture." << std::endl;
 
 	this->buttonSprite.setTexture(this->buttonTexture);
-	this->buttonSprite.setScale(2.5f, 1.25f);
+	this->buttonSprite.setScale(2.75f, 1.5f);
 	for (int i = 0; i < 6; i++)
 	{
 		this->buttons.push_back(this->buttonSprite);
@@ -38,42 +38,42 @@ void MainMenu::Init_Resources()
 	this->doodleJump.setCharacterSize(32);
 	this->doodleJump.setFillColor(sf::Color::Black);
 	this->doodleJump.setString("Doodle Jump");
-	this->doodleJump.setPosition(965.f, 50.f);
+	this->doodleJump.setPosition(975.f, 60.f);
 
 	//Arkanoid (Button 2 [1])
 	this->arkanoid.setFont(this->font);
 	this->arkanoid.setCharacterSize(32);
 	this->arkanoid.setFillColor(sf::Color::Black);
 	this->arkanoid.setString("Arkanoid");
-	this->arkanoid.setPosition(1000.f, 130.f);
+	this->arkanoid.setPosition(1010.f, 140.f);
 	
 	//Snake (Button 3 [2])
 	this->snake.setFont(this->font);
 	this->snake.setCharacterSize(32);
 	this->snake.setFillColor(sf::Color::Black);
 	this->snake.setString("Snake");
-	this->snake.setPosition(1015.f, 210.f);
+	this->snake.setPosition(1025.f, 220.f);
 	
 	//Car racing (Button 4 [3])
-	this->carRacing.setFont(this->font);
-	this->carRacing.setCharacterSize(32);
-	this->carRacing.setFillColor(sf::Color::Black);
-	this->carRacing.setString("Car Racing");
-	this->carRacing.setPosition(980.f, 290.f);
+	this->asteroidShooter.setFont(this->font);
+	this->asteroidShooter.setCharacterSize(32);
+	this->asteroidShooter.setFillColor(sf::Color::Black);
+	this->asteroidShooter.setString("Asteroid Shooter");
+	this->asteroidShooter.setPosition(960.f, 300.f);
 	
 	//Xonix (Button 5 [4])
 	this->xonix.setFont(this->font);
 	this->xonix.setCharacterSize(32);
 	this->xonix.setFillColor(sf::Color::Black);
 	this->xonix.setString("Xonix");
-	this->xonix.setPosition(1015.f, 370.f);
+	this->xonix.setPosition(1025.f, 380.f);
 	
 	//Quit (Button 6 [5])
 	this->quit.setFont(this->font);
 	this->quit.setCharacterSize(32);
 	this->quit.setFillColor(sf::Color::Black);
 	this->quit.setString("Quit");
-	this->quit.setPosition(1025.f, 450.f);
+	this->quit.setPosition(1035.f, 450.f);
 
 }
 
@@ -120,7 +120,7 @@ void MainMenu::Render(sf::RenderTarget& target)
 	target.draw(this->doodleJump);
 	target.draw(this->arkanoid);
 	target.draw(this->snake);
-	target.draw(this->carRacing);
+	target.draw(this->asteroidShooter);
 	target.draw(this->xonix);
 	target.draw(this->quit);
 }

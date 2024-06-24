@@ -12,7 +12,7 @@ private:
 
 	//Font
 	sf::Font font;
-	sf::Text doodleJump, arkanoid, snake, carRacing, xonix, quit;
+	sf::Text doodleJump, arkanoid, snake, asteroidShooter, xonix, quit;
 
 	//	FUNCTIONS	//
 	//Initializers
