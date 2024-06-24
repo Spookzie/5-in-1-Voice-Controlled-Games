@@ -40,7 +40,7 @@ void Game::InitResources()
     if (!this->music.openFromFile("SFX/Snake/WondrousWaters.wav"))
         std::cout << "ERROR::Game.cpp::InitResources: Failed to music" << std::endl;
 
-    this->music.setVolume(5.f);
+    this->music.setVolume(10.f);
     this->music.setLoop(true);
     this->music.play();
 
