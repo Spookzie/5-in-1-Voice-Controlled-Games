@@ -38,7 +38,7 @@ void Game::LaunchGame(int game_id)
         command = "AsteroidShooter\\x64\\Debug\\AsteroidShooter.exe";
         break;
     case 4:
-        command = "\"path/to/xonix_executable.exe\"";
+        command = "Xonix\\x64\\Debug\\Xonix.exe";
         break;
     case 5:
         this->window.close();
