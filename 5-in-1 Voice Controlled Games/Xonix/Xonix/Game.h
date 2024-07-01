@@ -1,7 +1,10 @@
 #pragma once
+#pragma comment(lib, "ws2_32.lib")
 
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <thread>
+#include <WinSock2.h>
 
 
 class Game
@@ -61,19 +64,35 @@ private:
 
     // Player position
     int playerX, playerY, dx, dy;
+    bool isMovingUp, isMovingRight, isMovingDown, isMovingLeft;
+    
+    //Socket Communication
+    SOCKET ListenSocket;
+    SOCKET ClientSocket;
+    std::thread socketThread;
 
-    // Functions
+    //  FUNCTIONS   //
+    //Initializers
     void Init_Window();
     void Init_Resources();
+    void Init_Socket();
+    void Start();
+
+    //Game Setup
     void PollEvents();
-    void Movement();
+    
+    //Game Control
+    void Movement(const std::string& command = "");
     void Capture(int y, int x);
     void Tick();
+
+    //Socket Communication
+    void SocketListener();
 
 public:
     // Constructor & Destructor
     Game();
-    ~Game() = default;
+    virtual ~Game();
 
     // Game setup
     const sf::RenderWindow& GetWindow() const { return this->window; }

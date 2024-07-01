@@ -91,6 +91,8 @@ void Game::Init_Player()
 	this->player = new Player();
 
 	this->player->SetPos(315.f, this->window->getSize().y);
+
+	this->isMovingLeft = this->isMovingRight = false;
 }
 
 
@@ -99,6 +101,85 @@ void Game::Init_Enemies()
 {
 	this->spawnTImerMax = 30.f;
 	this->spawnTimer = this->spawnTImerMax;
+}
+
+
+void Game::Init_Socket()
+{
+	WSADATA wsaData;
+
+	// Initialize Winsock
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0) {
+		std::cerr << "WSAStartup failed: " << iResult << std::endl;
+		exit(1);
+	}
+
+	// Create a socket for listening for incoming connection requests.
+	ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (ListenSocket == INVALID_SOCKET) {
+		std::cerr << "Error at socket(): " << WSAGetLastError() << std::endl;
+		WSACleanup();
+		exit(1);
+	}
+
+	// Bind the socket.
+	sockaddr_in service;
+	service.sin_family = AF_INET;
+	service.sin_addr.s_addr = INADDR_ANY;
+	service.sin_port = htons(65432);
+	if (bind(ListenSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
+		std::cerr << "Bind failed: " << WSAGetLastError() << std::endl;
+		closesocket(ListenSocket);
+		WSACleanup();
+		exit(1);
+	}
+
+	// Listen on the socket.
+	if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR) {
+		std::cerr << "Error at listen(): " << WSAGetLastError() << std::endl;
+		closesocket(ListenSocket);
+		WSACleanup();
+		exit(1);
+	}
+
+	// Accept a client socket.
+	ClientSocket = accept(ListenSocket, NULL, NULL);
+	if (ClientSocket == INVALID_SOCKET) {
+		std::cerr << "Accept failed: " << WSAGetLastError() << std::endl;
+		closesocket(ListenSocket);
+		WSACleanup();
+		exit(1);
+	}
+
+	// Start socket listener thread.
+	socketThread = std::thread(&Game::SocketListener, this);
+}
+
+
+void Game::SocketListener()
+{
+	char recvbuf[512];
+	int iResult;
+
+	while (true) {
+		iResult = recv(ClientSocket, recvbuf, 512, 0);
+		if (iResult > 0) {
+			std::string command(recvbuf, iResult);
+			std::cout << "Received command: " << command << std::endl;
+			UpdateInput(command); // Process the received command
+		}
+		else if (iResult == 0) {
+			std::cout << "Connection closed" << std::endl;
+			break;
+		}
+		else {
+			std::cerr << "recv failed: " << WSAGetLastError() << std::endl;
+			break;
+		}
+	}
+
+	closesocket(ClientSocket);
 }
 
 
@@ -111,6 +192,7 @@ Game::Game()
 	this->Init_World();
 	this->Init_Player();
 	this->Init_Enemies();
+	this->Init_Socket();
 }
 
 
@@ -131,6 +213,15 @@ Game::~Game()
 	//Deleting Enemies
 	for (auto* i : this->enemiesVector)
 		delete i;
+
+	//Close socket
+	closesocket(ClientSocket);
+	closesocket(ListenSocket);
+	WSACleanup();
+
+	//Stop socket thread
+	if (socketThread.joinable())
+		socketThread.join();
 }
 
 
@@ -154,24 +245,28 @@ void Game::UpdatePollEvents()
 
 
 //Input Updating Function
-void Game::UpdateInput()
+void Game::UpdateInput(const std::string& command)
 {
-	Player* frog = this->player;
+	//Enabling & disabling flags on different inputs
+	if ((sf::Keyboard::isKeyPressed(sf::Keyboard::A)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) || command == "left")
+	{
+		this->isMovingLeft = true;
+		this->isMovingRight = false;
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) || (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) || command == "right")
+	{
+		this->isMovingRight = true;
+		this->isMovingLeft = false;
+	}
 
-	//Vertical Player Movement
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-		frog->Move(0.f, -1.f);
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-		frog->Move(0.f, 1.f);
-
-	//Horizontal PLayer Movement
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-		frog->Move(-1.f, 0.f);
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-		frog->Move(1.f, 0.f);
+	//Continuous movement based on flags	
+	if (this->isMovingLeft)
+		this->player->Move(-1.f, 0.f);
+	else if (this->isMovingRight)
+		this->player->Move(1.f, 0.f);
 
 	//Shooting
-	if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) && this->player->CanAttack())
+	if (this->player->CanAttack())
 	{
 		this->bulletsVector.push_back(new Bullet(this->texturesMap["Bullet"],		//Texture
 			this->player->GetPos().x + 15.f, this->player->GetPos().y - 25.f,		//Spawn Position

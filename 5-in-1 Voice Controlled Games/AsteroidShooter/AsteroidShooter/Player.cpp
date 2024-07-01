@@ -13,7 +13,6 @@ void Player::Init_Texture()
 void Player::Init_Sprite()
 {
 	this->sprite.setTexture(this->texture);
-	//this->sprite.scale(0.07f, 0.07f);
 	this->sprite.scale(0.1f, 0.1f);
 }
 
@@ -21,9 +20,9 @@ void Player::Init_Sprite()
 void Player::Init_Variables()
 {
 	this->moveSpeed = 8.f;
-	this->attackCooldownMax = 10.f;
+	this->attackCooldownMax = 15.f;
 	this->attackCooldown = this->attackCooldownMax;
-	this->hpMax = 50;
+	this->hpMax = 75;
 	this->hp = this->hpMax;
 }
 

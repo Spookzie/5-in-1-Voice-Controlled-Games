@@ -1,9 +1,12 @@
 #pragma once
+#pragma comment(lib, "ws2_32.lib")
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
 #include <sstream>
+#include <thread>
+#include <WinSock2.h>
 
 
 struct PlatformCoordinates { int x, y; };
@@ -32,28 +35,39 @@ private:
 	// Player
 	int doodleX, doodleY, doodleH;
 	float doodleDY;
+	bool isMovingLeft, isMovingRight;
 
 	// Platforms
 	std::vector<PlatformCoordinates> platforms;
+
+	//Socket Communication
+	SOCKET ListenSocket;
+	SOCKET ClientSocket;
+	std::thread socketThread;
 
 	//	FUNCTIONS	//
 	//Initializers
 	void Init_Window();
 	void Init_Resources();
+	void Init_Socket();
 	void Start();
 
 	//Game setup
 	void PollEvents();
 
 	//Game Control
-	void PlayerMovement();
+	void PlayerMovement(const std::string& command = "");
 	void ScreenScrolling();
 	void PlatformBouncing();
 	void UpdatePointsText();
 
+	//Socket Communication
+	void SocketListener();
+
 public:
 	//Constructor & Destructor
 	Game();
+	virtual ~Game();
 
 	//Game setup
 	const sf::RenderWindow& GetWindow() const { return this->window; };

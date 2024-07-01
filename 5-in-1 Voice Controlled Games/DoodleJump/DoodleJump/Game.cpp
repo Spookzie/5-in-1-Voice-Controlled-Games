@@ -73,6 +73,64 @@ void Game::Init_Resources()
 }
 
 
+void Game::Init_Socket()
+{
+	WSADATA wsaData;
+
+	// Initialize Winsock
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0)
+	{
+		std::cerr << "WSAStartup failed: " << iResult << std::endl;
+		exit(1);
+	}
+
+	// Create a socket for listening for incoming connection requests.
+	ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (ListenSocket == INVALID_SOCKET)
+	{
+		std::cerr << "Error at socket(): " << WSAGetLastError() << std::endl;
+		WSACleanup();
+		exit(1);
+	}
+
+	// Bind the socket.
+	sockaddr_in service;
+	service.sin_family = AF_INET;
+	service.sin_addr.s_addr = INADDR_ANY;
+	service.sin_port = htons(65432);
+	if (bind(ListenSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
+	{
+		std::cerr << "Bind failed: " << WSAGetLastError() << std::endl;
+		closesocket(ListenSocket);
+		WSACleanup();
+		exit(1);
+	}
+
+	// Listen on the socket.
+	if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
+	{
+		std::cerr << "Error at listen(): " << WSAGetLastError() << std::endl;
+		closesocket(ListenSocket);
+		WSACleanup();
+		exit(1);
+	}
+
+	// Accept a client socket.
+	ClientSocket = accept(ListenSocket, NULL, NULL);
+	if (ClientSocket == INVALID_SOCKET)
+	{
+		std::cerr << "Accept failed: " << WSAGetLastError() << std::endl;
+		closesocket(ListenSocket);
+		WSACleanup();
+		exit(1);
+	}
+
+	// Start socket listener thread.
+	socketThread = std::thread(&Game::SocketListener, this);
+}
+
+
 void Game::Start()
 {
 	//Initialize Player
@@ -80,6 +138,7 @@ void Game::Start()
 	this->doodleY = 200;
 	this->doodleH = 200;
 	this->doodleDY = 0;
+	this->isMovingLeft = this->isMovingRight = false;
 
 	// Initialize platforms
 	this->platforms.resize(13);
@@ -108,17 +167,29 @@ void Game::PollEvents()
 
 
 //Player input & gravity
-void Game::PlayerMovement()
+void Game::PlayerMovement(const std::string& command)
 {
 	//	Input	//
-	if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::D)))
-		this->doodleX += 5;
+	//Enabling & disabling flags on different inputs
+	if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) || command == "right")
+	{
+		this->isMovingLeft = false;
+		this->isMovingRight = true;
+	}
+	else if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) || command == "left")
+	{
+		this->isMovingLeft = true;
+		this->isMovingRight = false;
+	}
 
-	if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::A)))
+	//Continuous movement based on flags	
+	if (this->isMovingRight)
+		this->doodleX += 5;
+	else if (this->isMovingLeft)
 		this->doodleX -= 5;
 
 	//	Gravity	//
-	this->doodleDY += 0.2f;
+	this->doodleDY += 0.1f;
 	this->doodleY += this->doodleDY;
 
 	// Check for collision with the bottom of the screen
@@ -138,6 +209,7 @@ void Game::PlayerMovement()
 	// Set doodle position
 	doodle.setPosition(doodleX, doodleY);
 }
+
 
 //Scroll platforms and player if jumping up
 void Game::ScreenScrolling()
@@ -167,7 +239,7 @@ void Game::PlatformBouncing()
 			(doodleY + 70 > platform.y) && (doodleY + 70 < platform.y + 14) &&
 			(doodleDY > 0))
 		{
-			doodleDY = -10;
+			doodleDY = -11;
 			this->points += 10;
 			this->bounceSound.play();
 		}
@@ -183,11 +255,55 @@ void Game::UpdatePointsText()
 }
 
 
+void Game::SocketListener()
+{
+	char recvbuf[512];
+	int iResult;
+
+	while (true)
+	{
+		iResult = recv(ClientSocket, recvbuf, 512, 0);
+		if (iResult > 0)
+		{
+			std::string command(recvbuf, iResult);
+			std::cout << "Received command: " << command << std::endl;
+			this->PlayerMovement(command); // Process the received command
+		}
+		else if (iResult == 0)
+		{
+			std::cout << "Connection closed" << std::endl;
+			break;
+		}
+		else
+		{
+			std::cerr << "recv failed: " << WSAGetLastError() << std::endl;
+			break;
+		}
+	}
+
+	closesocket(ClientSocket);
+}
+
+
 Game::Game()
 {
 	this->Init_Window();
 	this->Init_Resources();
+	this->Init_Socket();
 	this->Start();
+}
+
+
+Game::~Game()
+{
+	//Close socket
+	closesocket(ClientSocket);
+	closesocket(ListenSocket);
+	WSACleanup();
+
+	//Stop socket thread
+	if (socketThread.joinable())
+		socketThread.join();
 }
 
 

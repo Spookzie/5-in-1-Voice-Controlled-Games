@@ -5,7 +5,7 @@
 void Enemy::Init_Variables()
 {
 	this->pointCount = rand() % 5 + 3;
-	this->speed = 6.f;
+	this->speed = 4.f;
 	this->damage = this->pointCount;
 	this->points = this->pointCount;
 
