@@ -27,7 +27,6 @@ void Game::LaunchGame(int game_id)
     {
     case 0:
         command = "DoodleJump\\x64\\Debug\\DoodleJump.exe";
-        
         break;
     case 1:
         command = "Arkanoid\\x64\\Debug\\Arkanoid.exe";
