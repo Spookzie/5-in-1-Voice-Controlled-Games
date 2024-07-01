@@ -53,6 +53,64 @@ void Game::InitResources()
 }
 
 
+void Game::Init_Socket()
+{
+    WSADATA wsaData;
+
+    // Initialize Winsock
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0)
+    {
+        std::cerr << "WSAStartup failed: " << iResult << std::endl;
+        exit(1);
+    }
+
+    // Create a socket for listening for incoming connection requests.
+    ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (ListenSocket == INVALID_SOCKET)
+    {
+        std::cerr << "Error at socket(): " << WSAGetLastError() << std::endl;
+        WSACleanup();
+        exit(1);
+    }
+
+    // Bind the socket.
+    sockaddr_in service;
+    service.sin_family = AF_INET;
+    service.sin_addr.s_addr = INADDR_ANY;
+    service.sin_port = htons(65432);
+    if (bind(ListenSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
+    {
+        std::cerr << "Bind failed: " << WSAGetLastError() << std::endl;
+        closesocket(ListenSocket);
+        WSACleanup();
+        exit(1);
+    }
+
+    // Listen on the socket.
+    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
+    {
+        std::cerr << "Error at listen(): " << WSAGetLastError() << std::endl;
+        closesocket(ListenSocket);
+        WSACleanup();
+        exit(1);
+    }
+
+    // Accept a client socket.
+    ClientSocket = accept(ListenSocket, NULL, NULL);
+    if (ClientSocket == INVALID_SOCKET)
+    {
+        std::cerr << "Accept failed: " << WSAGetLastError() << std::endl;
+        closesocket(ListenSocket);
+        WSACleanup();
+        exit(1);
+    }
+
+    // Start socket listener thread.
+    socketThread = std::thread(&Game::SocketListener, this);
+}
+
+
 void Game::Start()
 {
     this->maxSnakeLength = this->snakeLength;
@@ -60,6 +118,8 @@ void Game::Start()
 
     //Setting fruit location
     a.x = 10;   a.y = 10;
+
+    this->isMovingUp = this->isMovingRight = this->isMovingDown = this->isMovingLeft = false;
 }
 
 
@@ -73,16 +133,37 @@ void Game::PollEvents()
 }
 
 
-void Game::Movement()
+void Game::Movement(const std::string& command)
 {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-        this->dir = 1;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-        this->dir = 2;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-        this->dir = 3;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-        this->dir = 0;
+    //Handling flags on input
+    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) || command == "left")
+    {
+        this->isMovingLeft = true;
+        this->isMovingUp = this->isMovingRight = this->isMovingDown = false;
+    }
+    else if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) || (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) || command == "right")
+    {
+        this->isMovingRight = true;
+        this->isMovingUp = this->isMovingDown = this->isMovingLeft = false;
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) || command == "up")
+    {
+        this->isMovingUp = true;
+        this->isMovingRight = this->isMovingDown = this->isMovingLeft = false;
+    }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) || command == "down")
+    {
+        this->isMovingDown = true;
+        this->isMovingUp = this->isMovingRight = this->isMovingLeft = false;
+    }
+
+    //Updating movement on flag
+    if(this->isMovingUp)            this->dir = 3;
+    else if(this->isMovingRight)    this->dir = 2;
+    else if(this->isMovingLeft)     this->dir = 1;
+    else if(this->isMovingDown)     this->dir = 0;
+    
 }
 
 
@@ -151,11 +232,55 @@ void Game::UpdateEndText()
 }
 
 
+void Game::SocketListener()
+{
+    char recvbuf[512];
+    int iResult;
+
+    while (true)
+    {
+        iResult = recv(ClientSocket, recvbuf, 512, 0);
+        if (iResult > 0)
+        {
+            std::string command(recvbuf, iResult);
+            std::cout << "Received command: " << command << std::endl;
+            this->Movement(command); // Process the received command
+        }
+        else if (iResult == 0)
+        {
+            std::cout << "Connection closed" << std::endl;
+            break;
+        }
+        else
+        {
+            std::cerr << "recv failed: " << WSAGetLastError() << std::endl;
+            break;
+        }
+    }
+
+    closesocket(ClientSocket);
+}
+
+
 Game::Game() : dir(0), snakeLength(4), timer(0), delay(0.1f)
 {
     this->InitWindow();
     this->InitResources();
+    this->Init_Socket();
     this->Start();
+}
+
+
+Game::~Game()
+{
+    //Close socket
+    closesocket(ClientSocket);
+    closesocket(ListenSocket);
+    WSACleanup();
+
+    //Stop socket thread
+    if (socketThread.joinable())
+        socketThread.join();
 }
 
 

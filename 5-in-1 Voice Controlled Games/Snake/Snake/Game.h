@@ -1,9 +1,12 @@
 #pragma once
+#pragma comment(lib, "ws2_32.lib")
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
 #include <sstream>
+#include <thread>
+#include <WinSock2.h>
 
 
 class Game
@@ -36,19 +39,35 @@ private:
     struct Apple { int x, y; } a;
     int dir;
     int snakeLength, maxSnakeLength;
+    bool isMovingUp, isMovingRight, isMovingDown, isMovingLeft;
 
-    //Functions
+    //Socket Communication
+    SOCKET ListenSocket;
+    SOCKET ClientSocket;
+    std::thread socketThread;
+
+    //  FUNCTIONS   //
+    //Initializers
     void InitWindow();
     void InitResources();
+    void Init_Socket();
     void Start();
+    
+    //Game Setup
     void PollEvents();
-    void Movement();
+    
+    //Game Control
+    void Movement(const std::string& command = "");
     int Tick();
     void UpdateEndText();
+
+    //Socket Communication
+    void SocketListener();
 
 public:
     // Constructor & Destructor
     Game();
+    virtual ~Game();
 
     // Game setup
     const sf::RenderWindow& GetWindow() const { return this->window; };

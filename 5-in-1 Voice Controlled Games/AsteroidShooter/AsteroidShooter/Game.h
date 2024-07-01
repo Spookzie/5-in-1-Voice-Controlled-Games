@@ -1,9 +1,11 @@
 #pragma once
+#pragma comment(lib, "ws2_32.lib")
 
 #include <string>
 #include <sstream>
 #include <SFML/Audio.hpp>
 #include <thread>
+#include <winsock2.h>
 
 #include "Player.h"
 #include "Bullet.h"
@@ -35,6 +37,7 @@ private:
 	Player* player;
 	sf::RectangleShape playerHealthBar;
 	sf::RectangleShape playerHealthBarBG;
+	bool isMovingLeft, isMovingRight;
 
 	//Bullet
 	std::map<std::string, sf::Texture*> texturesMap;
@@ -45,6 +48,10 @@ private:
 	//Enemies
 	std::vector<Enemy*> enemiesVector;
 
+	//Socket Communication
+	SOCKET ListenSocket;
+	SOCKET ClientSocket;
+	std::thread socketThread;
 
 	//	FUNCTIONS	//
 	//Initializers
@@ -54,6 +61,10 @@ private:
 	void Init_World();
 	void Init_Player();
 	void Init_Enemies();
+	void Init_Socket();
+
+	//Socket Communication
+	void SocketListener();
 
 public:
 	//Constructor & Destructor
@@ -66,7 +77,7 @@ public:
 
 	//Update Function
 	void UpdatePollEvents();
-	void UpdateInput();
+	void UpdateInput(const std::string& command = "");
 	void UpdateGUI();
 	void LimitPlayerMovement();
 	void UpdateBullets();

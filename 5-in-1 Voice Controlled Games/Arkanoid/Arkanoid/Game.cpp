@@ -79,6 +79,64 @@ void Game::Init_Resources()
 }
 
 
+void Game::Init_Socket()
+{
+    WSADATA wsaData;
+
+    // Initialize Winsock
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0)
+    {
+        std::cerr << "WSAStartup failed: " << iResult << std::endl;
+        exit(1);
+    }
+
+    // Create a socket for listening for incoming connection requests.
+    ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (ListenSocket == INVALID_SOCKET)
+    {
+        std::cerr << "Error at socket(): " << WSAGetLastError() << std::endl;
+        WSACleanup();
+        exit(1);
+    }
+
+    // Bind the socket.
+    sockaddr_in service;
+    service.sin_family = AF_INET;
+    service.sin_addr.s_addr = INADDR_ANY;
+    service.sin_port = htons(65432);
+    if (bind(ListenSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
+    {
+        std::cerr << "Bind failed: " << WSAGetLastError() << std::endl;
+        closesocket(ListenSocket);
+        WSACleanup();
+        exit(1);
+    }
+
+    // Listen on the socket.
+    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
+    {
+        std::cerr << "Error at listen(): " << WSAGetLastError() << std::endl;
+        closesocket(ListenSocket);
+        WSACleanup();
+        exit(1);
+    }
+
+    // Accept a client socket.
+    ClientSocket = accept(ListenSocket, NULL, NULL);
+    if (ClientSocket == INVALID_SOCKET)
+    {
+        std::cerr << "Accept failed: " << WSAGetLastError() << std::endl;
+        closesocket(ListenSocket);
+        WSACleanup();
+        exit(1);
+    }
+
+    // Start socket listener thread.
+    socketThread = std::thread(&Game::SocketListener, this);
+}
+
+
 void Game::Start()
 {
     this->ballDX = rand() % 13 - 6;
@@ -88,6 +146,7 @@ void Game::Start()
     this->paddleDX = 10.f;
     this->blockCount = this->blocks.size();
     this->hasEnded = false;
+    this->isMovingLeft = this->isMovingRight = false;
 }
 
 
@@ -134,25 +193,20 @@ void Game::CheckCollisions()
     //  Ball collision with screen   //
     //Side 
     if (this->ballX < 0 || this->ballSprite.getGlobalBounds().left + this->ballSprite.getGlobalBounds().width > this->window.getSize().x)
-
         this->ballDX = -this->ballDX;
 
-    //Top
+    //Top & Bottom
     if (this->ballY < 0)
         this->ballDY = -this->ballDY;
-
-    //Bottom
-    if (this->ballY > this->window.getSize().y)
-        this->hasEnded = true;
+    else if (this->ballY > this->window.getSize().y)
+        this->ballDY = -this->ballDY;
+        //this->hasEnded = true;
 
 
     //  Paddle collision with screen    //
-    //Left
     if (this->paddleSprite.getGlobalBounds().left < 0.f)
         this->paddleSprite.setPosition(0.f, this->paddleSprite.getGlobalBounds().top);
-
-    //Right
-    if ((this->paddleSprite.getGlobalBounds().left + this->paddleSprite.getGlobalBounds().width) > this->window.getSize().x)
+    else if ((this->paddleSprite.getGlobalBounds().left + this->paddleSprite.getGlobalBounds().width) > this->window.getSize().x)
     {
         this->paddleSprite.setPosition(this->window.getSize().x - this->paddleSprite.getGlobalBounds().width,
             this->paddleSprite.getGlobalBounds().top);
@@ -169,12 +223,56 @@ void Game::UpdateBall()
 }
 
 
-void Game::UpdatePaddle()
+void Game::UpdatePaddle(const std::string& command)
 {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    //Handling flags on inputs
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::D) || command == "right")
+    {
+        this->isMovingLeft = false;
+        this->isMovingRight = true;
+    }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A) || command == "left")
+    {
+        this->isMovingLeft = true;
+        this->isMovingRight = false;
+    }
+
+    //Continuous movement based on flags
+    if(this->isMovingRight)
         this->paddleSprite.move(this->paddleDX, 0.f);
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    else if(this->isMovingLeft)
         this->paddleSprite.move(-this->paddleDX, 0.f);
+
+}
+
+
+void Game::SocketListener()
+{
+    char recvbuf[512];
+    int iResult;
+
+    while (true)
+    {
+        iResult = recv(ClientSocket, recvbuf, 512, 0);
+        if (iResult > 0)
+        {
+            std::string command(recvbuf, iResult);
+            std::cout << "Received command: " << command << std::endl;
+            this->UpdatePaddle(command); // Process the received command
+        }
+        else if (iResult == 0)
+        {
+            std::cout << "Connection closed" << std::endl;
+            break;
+        }
+        else
+        {
+            std::cerr << "recv failed: " << WSAGetLastError() << std::endl;
+            break;
+        }
+    }
+
+    closesocket(ClientSocket);
 }
 
 
@@ -183,7 +281,21 @@ Game::Game()
 {
     this->Init_Window();
     this->Init_Resources();
+    this->Init_Socket();
     this->Start();
+}
+
+
+Game::~Game()
+{
+    //Close socket
+    closesocket(ClientSocket);
+    closesocket(ListenSocket);
+    WSACleanup();
+
+    //Stop socket thread
+    if (socketThread.joinable())
+        socketThread.join();
 }
 
 
